@@ -36,8 +36,18 @@ use std::collections::{BTreeMap, HashMap};
 
 /// Size sweep for `get` benches. The routine is fast enough per
 /// iteration to cover several orders of magnitude.
+///
+/// Under CodSpeed (`cargo codspeed build`, which sets `cfg(codspeed)`) every
+/// benchmark runs on a simulated CPU, which is a few orders of magnitude
+/// slower than native execution. The two largest sizes are dropped there to
+/// keep CI runtimes reasonable -- the remaining sweep still spans the
+/// cache-resident to main-memory regimes. Native `cargo bench` runs are
+/// unaffected.
+#[cfg(not(codspeed))]
 const GET_SIZES: &[usize] =
     &[1, 10, 100, 1_000, 10_000, 50_000, 100_000, 500_000, 1_000_000];
+#[cfg(codspeed)]
+const GET_SIZES: &[usize] = &[1, 10, 100, 1_000, 10_000, 50_000, 100_000];
 
 /// Size sweep for the remaining workloads. Each iteration does a full
 /// insert / churn / iter / shrink pass, so the range is kept narrow.
@@ -51,7 +61,14 @@ const CHURN_OPS: usize = 1_000;
 /// per record. The larger batch sizes are enough to blow past L3 cache on every
 /// consumer-class CPU, and exercise the realloc-and-memcpy cost that resizing
 /// the backing storage incurs on a populated map.
+///
+/// As with [`GET_SIZES`], the largest size is dropped under CodSpeed's CPU
+/// simulation: one million 1 KiB records is a gigabyte of live data, which is
+/// prohibitively slow to run on a simulated CPU.
+#[cfg(not(codspeed))]
 const LARGE_SIZES: &[usize] = &[1_000, 10_000, 100_000, 1_000_000];
+#[cfg(codspeed)]
+const LARGE_SIZES: &[usize] = &[1_000, 10_000, 100_000];
 
 fn record(i: u32) -> RecordOwnedU32 {
     RecordOwnedU32 { index: i, data: String::new() }

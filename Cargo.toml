@@ -12,13 +12,17 @@ undocumented_unsafe_blocks = { level = "warn" }
 
 [workspace.lints.rust]
 # `cfg(soteria)` is set by the Soteria symbolic-execution frontend.
-unexpected_cfgs = { level = "warn", check-cfg = ["cfg(doc_cfg)", "cfg(soteria)"] }
+# `cfg(codspeed)` is set by `cargo codspeed build` when benchmarks are built
+# for CodSpeed's CPU simulation.
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(doc_cfg)", "cfg(soteria)", "cfg(codspeed)"] }
 
 [workspace.dependencies]
 allocator-api2 = { version = "0.2.21", default-features = false, features = ["alloc"] }
 bumpalo = { version = "3.19.0", features = ["allocator-api2", "collections"] }
 camino = "1.2.4"
-criterion = "0.7.0"
+# The CodSpeed compatibility layer re-exports the criterion 0.7 API, and falls
+# back to upstream criterion when not running under CodSpeed.
+criterion = { package = "codspeed-criterion-compat", version = "5.0.1" }
 daft = { version = "0.1.5", default-features = false }
 equivalent = "1.0.2"
 expectorate = "1.2.0"
